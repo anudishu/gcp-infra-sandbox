@@ -1,0 +1,134 @@
+# =========================================
+# EXAMPLE TERRAFORM VARIABLES
+# Copy this file to terraform.tfvars and customize
+# =========================================
+
+# Project Configuration
+project_id      = "your-gcp-project-id"
+organization_id = "123456789012"  # Optional
+folder_id      = ""              # Optional
+
+# Basic Configuration
+environment    = "dev"
+project_name   = "shivani-infrastructure"
+default_region = "us-central1"
+default_zone   = "us-central1-a"
+
+# Labels
+default_labels = {
+  managed-by   = "terraform"
+  environment  = "dev"
+  team         = "infrastructure"
+  cost-center  = "engineering"
+}
+
+# Feature Flags
+create_network = true
+create_storage = true
+create_iam     = true
+
+# Network Configuration
+network_config = {
+  network_name = "main-vpc"
+  
+  subnets = {
+    "web-subnet" = {
+      ip_cidr_range            = "10.0.1.0/24"
+      region                   = "us-central1"
+      description              = "Subnet for web tier"
+      private_ip_google_access = true
+      secondary_ranges = [
+        {
+          range_name    = "web-services"
+          ip_cidr_range = "10.1.0.0/16"
+        }
+      ]
+    }
+    
+    "app-subnet" = {
+      ip_cidr_range            = "10.0.2.0/24"
+      region                   = "us-central1"
+      description              = "Subnet for application tier"
+      private_ip_google_access = true
+    }
+    
+    "data-subnet" = {
+      ip_cidr_range            = "10.0.3.0/24"
+      region                   = "us-central1"
+      description              = "Subnet for data tier"
+      private_ip_google_access = true
+    }
+  }
+  
+  enable_nat        = true
+  nat_regions       = ["us-central1"]
+  enable_iap        = false
+  iap_support_email = "admin@company.com"
+}
+
+# Storage Configuration
+storage_config = {
+  buckets = {
+    "app-data-bucket" = {
+      location               = "US"
+      storage_class         = "STANDARD"
+      versioning_enabled    = true
+      force_destroy         = false  # Set to true for dev/test environments
+      labels = {
+        purpose = "application-data"
+      }
+    }
+    
+    "backup-bucket" = {
+      location      = "US"
+      storage_class = "COLDLINE"
+      labels = {
+        purpose = "backups"
+      }
+    }
+    
+    "logs-bucket" = {
+      location      = "US"
+      storage_class = "NEARLINE"
+      labels = {
+        purpose = "application-logs"
+      }
+    }
+    
+    "archive-bucket" = {
+      location      = "US"
+      storage_class = "ARCHIVE"
+      labels = {
+        purpose = "long-term-archive"
+      }
+    }
+  }
+}
+
+# IAM Configuration
+iam_config = {
+  service_accounts = {
+    "app-service-account" = {
+      display_name = "Application Service Account"
+      description  = "Service account for application workloads"
+    }
+    
+    "backup-service-account" = {
+      display_name = "Backup Service Account" 
+      description  = "Service account for backup operations"
+    }
+    
+    "monitoring-service-account" = {
+      display_name = "Monitoring Service Account"
+      description  = "Service account for monitoring and logging"
+    }
+  }
+  
+  project_iam_bindings = {
+    "roles/monitoring.metricWriter" = {
+      members = [
+        # Will be populated with service account after creation
+      ]
+    }
+  }
+}
