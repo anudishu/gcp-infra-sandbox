@@ -1,203 +1,155 @@
-# GCP Infrastructure - Terraform Modules
+# GCP Infrastructure - Terraform
 
-Simple, modular GCP infrastructure using Terraform for networking, storage, and IAM.
+**Production-ready GCP infrastructure deployed with Terraform modules.**
+
+## 🌐 Live Infrastructure
+
+**✅ Successfully Deployed**
+- **Web Server**: http://104.197.2.119 (shivani-web-server)
+- **Project**: probable-cove-474504-p0
+- **Environment**: Development
+
+## 🏗️ Infrastructure Components
+
+| Module | Resources | Status |
+|--------|-----------|--------|
+| **Network** | VPC, subnets, firewall rules | ✅ |
+| **Storage** | 2 Cloud Storage buckets | ✅ |
+| **IAM** | Service accounts, roles | ✅ |
+| **Compute** | 1 VM (e2-medium, RHEL) | ✅ |
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
-- **Terraform** (>= 1.6) - [Install here](https://terraform.io/downloads)
-- **Google Cloud SDK** - [Install here](https://cloud.google.com/sdk/docs/install)
+### Prerequisites
+- [Terraform](https://terraform.io/downloads) >= 1.5
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 
-### 2. Setup Authentication
+### Authentication
 ```bash
-# Login to GCP
 gcloud auth application-default login
-
-# Set your project (replace with your project ID)
-gcloud config set project YOUR_PROJECT_ID
-
-# Enable required APIs
-gcloud services enable compute.googleapis.com storage-api.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com
+gcloud config set project probable-cove-474504-p0
 ```
 
-### 3. Configure Your Settings
-Edit `terraform.tfvars` file with your project details:
+### Deploy
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+## 📝 Configuration
+
+Edit `terraform.tfvars` to customize:
 
 ```hcl
-# Required: Your GCP project ID
-project_id = "your-project-id-here"
+# Basic settings
+project_id = "your-project-id"
+environment = "dev"
+
+# Enable/disable modules
+create_network = true
+create_storage = true
+create_iam = true
+create_compute = true
 ```
 
-### 4. Deploy Infrastructure
+## 🔧 Management
+
+### View Infrastructure
 ```bash
-# Initialize Terraform
-terraform init
-
-# Review what will be created
-terraform plan
-
-# Create the infrastructure
-terraform apply
+terraform output                 # All outputs
+terraform show                  # Current state
 ```
 
-That's it! 🎉
-
-## 📋 What Gets Created
-
-### 🌐 Network Resources
-- **1 VPC Network** - Main virtual network
-- **2 Subnets** - Web tier (10.0.1.0/24) and App tier (10.0.2.0/24)
-- **5 Firewall Rules** - HTTP/HTTPS, SSH, IAP access, Internal communication, Default deny
-
-### 🪣 Storage Resources  
-- **2 Cloud Storage Buckets** - App data and backup storage
-- **Lifecycle Policies** - Automatic cost optimization
-
-### 🔐 IAM Resources
-- **2 Service Accounts** - For applications and compute resources
-- **IAM Bindings** - Proper permissions for service accounts
-- **Custom Roles** - Storage lifecycle management
-
-## ⚙️ Key Features
-
-- **Simple Configuration** - Just set your project ID in `terraform.tfvars`
-- **Secure Network** - Private subnets with Google API access, no external internet
-- **Cost Optimized Storage** - Standard bucket for apps, coldline for backups
-- **Ready-to-Use IAM** - Service accounts with appropriate permissions
-- **Sandbox Ready** - Perfect for development and testing
-
-## 🛠️ Common Commands
-
+### Connect to Web Server
 ```bash
-# See what's currently deployed
-terraform show
-
-# Make changes to resources  
-terraform plan
-terraform apply
-
-# Target specific resources
-terraform apply -target=module.network
-terraform apply -target=module.storage
-terraform apply -target=module.iam
-
-# Clean up everything
-terraform destroy
+gcloud compute ssh shivani-web-server --zone=us-central1-a
 ```
 
-## 🔧 Troubleshooting
-
-**Error: API not enabled**
+### Manage Storage
 ```bash
-gcloud services enable compute.googleapis.com
+gsutil ls gs://shivani-dev-app-data-bucket/
+gsutil cp file.txt gs://shivani-dev-app-data-bucket/
 ```
 
-**Error: Permission denied**
-- Make sure you're logged in: `gcloud auth list`
-- Check project: `gcloud config get-value project`
+### Cost Control
+```bash
+# Stop VM (saves ~$25/month)
+gcloud compute instances stop shivani-web-server --zone=us-central1-a
 
-**Error: Resource already exists**
-- Import existing resource: `terraform import RESOURCE_TYPE.NAME RESOURCE_ID`
-- Or choose different names in `terraform.tfvars`
-
-## 💰 Estimated Costs (Monthly)
-
-- **Network:** FREE
-- **Storage:** ~$1-5 (depends on data stored)
-- **Service Accounts:** FREE
-- **Total:** Very low cost for sandbox/development
+# Restart when needed
+gcloud compute instances start shivani-web-server --zone=us-central1-a
+```
 
 ## 🧹 Cleanup
 
-When you're done testing:
 ```bash
+# Remove everything
 terraform destroy
+
+# Remove only compute resources
+terraform destroy -target=module.compute
 ```
 
-This removes all created resources to avoid ongoing charges.
+## 📋 What's Included
 
----
+- **Network**: VPC with web/app subnets, firewall rules
+- **Storage**: App data bucket + backup bucket with lifecycle policies
+- **IAM**: Service accounts with appropriate permissions
+- **Compute**: RHEL web server with Nginx pre-installed
+
+## 🔧 Troubleshooting
+
+**Permission Issues**
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
+**Network Not Found**
+```bash
+# Check actual network names
+gcloud compute networks list
+gcloud compute networks subnets list
+```
+
+**Image Issues**
+Change in `terraform.tfvars`:
+```hcl
+image_family = "rhel-9"           # Instead of rhel-10
+image_family = "ubuntu-2204-lts"  # Or use Ubuntu
+```
 
 ## 📁 Project Structure
 
 ```
 terraform-gcp-infrastructure/
-├── README.md                # This guide
-├── main.tf                  # Main configuration
-├── variables.tf             # Input variables  
-├── outputs.tf              # Output values
-├── terraform.tfvars        # Your settings
-├── terraform.tfvars.example # Example configuration
-├── versions.tf             # Provider versions
-└── modules/                # Reusable modules
-    ├── network/            # VPC, subnets, firewall
-    │   ├── main.tf
-    │   ├── variables.tf
-    │   ├── outputs.tf
-    │   └── README.md
-    ├── storage/            # Cloud Storage buckets
-    │   ├── main.tf
-    │   ├── variables.tf
-    │   ├── outputs.tf
-    │   └── README.md
-    └── iam/                # Service accounts, roles
-        ├── main.tf
-        ├── variables.tf
-        ├── outputs.tf
-        └── README.md
+├── main.tf                 # Main configuration
+├── variables.tf            # Input variables
+├── outputs.tf             # Outputs
+├── terraform.tfvars       # Your settings
+├── versions.tf            # Provider configuration
+└── modules/
+    ├── compute/           # VM instances
+    ├── network/           # VPC, subnets, firewall
+    ├── storage/           # Cloud Storage buckets
+    └── iam/               # Service accounts, roles
 ```
 
-## 📋 Modules Overview
+## 💰 Monthly Costs
 
-| Module | Purpose | Resources |
-|--------|---------|-----------|
-| **network** | VPC, subnets, firewall | VPC, subnets, firewall rules |
-| **storage** | Cloud Storage buckets | Storage buckets with versioning, lifecycle |
-| **iam** | IAM roles and permissions | Service accounts, IAM bindings |
+- **Compute (e2-medium)**: ~$25 (if running 24/7)
+- **Storage**: ~$1-5
+- **Network**: Free
+- **Total**: ~$26-30/month
 
-## 🔐 Identity-Aware Proxy (IAP) Setup
+## 🚀 Next Steps
 
-**Note:** IAP requires your GCP project to be part of an organization (not available for personal projects).
+1. **Test**: Visit http://104.197.2.119
+2. **SSH**: Connect to your server
+3. **Expand**: Add load balancer, database, monitoring
+4. **Production**: Configure remote state backend
 
-If you want to enable IAP for secure VM access:
+---
 
-1. **Update terraform.tfvars:**
-   ```hcl
-   enable_iap = true
-   iap_support_email = "your-email@domain.com"
-   ```
-
-2. **Tag your VMs** with `iap-access` to allow IAP connections:
-   ```hcl
-   tags = ["iap-access"]
-   ```
-
-3. **Connect via IAP:**
-   ```bash
-   gcloud compute ssh VM_NAME --zone=ZONE --tunnel-through-iap
-   ```
-
-The firewall rule `allow-iap-access` allows traffic from Google's IAP IP range (`35.235.240.0/20`) on ports:
-- **22** (SSH)
-- **80, 443** (HTTP/HTTPS) 
-- **3389** (RDP for Windows)
-
-## 🚀 Test Your Infrastructure
-
-```bash
-# List your buckets
-gsutil ls gs://shivani-dev-app-data-bucket/ gs://shivani-dev-backup-bucket/
-
-# Test bucket access
-echo "Hello from your infrastructure!" | gsutil cp - gs://shivani-dev-app-data-bucket/test.txt
-
-# View your networks and firewall rules
-gcloud compute networks list
-gcloud compute subnets list --filter="network:*main-vpc"
-gcloud compute firewall-rules list --filter="network:*main-vpc"
-
-# View service accounts
-gcloud iam service-accounts list --filter="email:*dev*"
-```
-
-**Need help?** Check the module README files in `modules/` for detailed documentation.# gcp-infra-sandbox
+**Need help?** Check module documentation in `modules/*/README.md`

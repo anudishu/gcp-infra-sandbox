@@ -5,6 +5,9 @@
 terraform {
   required_version = ">= 1.5"
 
+  # Partial backend configuration - details provided via backend config files
+  # backend "gcs" {}  # Commented out temporarily for local testing
+
   required_providers {
     google = {
       source  = "hashicorp/google"

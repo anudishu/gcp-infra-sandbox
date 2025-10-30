@@ -132,3 +132,185 @@ iam_config = {
     }
   }
 }
+
+# =========================================
+# COMPUTE CONFIGURATION
+# =========================================
+
+# Set to true to create compute resources
+create_compute = true
+
+compute_config = {
+  # VM instances configuration - user-friendly and flexible
+  vm_instances = {
+    # Example 1: Simple web server with external IP
+    web-server = {
+      name           = "my-web-server"           # Custom VM name
+      zone           = "us-central1-a"           # GCP zone
+      machine_type   = "e2-medium"               # 1 vCPU, 4GB RAM
+      boot_disk_size = 20                       # 20GB boot disk
+      
+      # Network configuration - select your VPC and subnet
+      network_name   = "shivani-dev-vpc-network" # Must match network module
+      subnet_name    = "shivani-dev-web-subnet"  # Must match network module
+      external_ip    = true                      # Create external IP for internet access
+      
+      # Security tags for firewall rules
+      network_tags   = ["web-server", "http-server"]
+      
+      # Enable SSH access
+      enable_ssh_access = true
+      
+      # Optional: Add SSH keys
+      ssh_keys = [
+        # "username:ssh-rsa AAAAB3NzaC1yc2E... username@example.com"
+      ]
+      
+      # Optional: Startup script to install software
+      startup_script = <<-EOF
+        #!/bin/bash
+        apt-get update
+        apt-get install -y nginx
+        systemctl enable nginx
+        systemctl start nginx
+        echo "<h1>Welcome to $(hostname)</h1>" > /var/www/html/index.html
+      EOF
+      
+      # Optional: Custom labels
+      labels = {
+        environment = "development"
+        application = "web-frontend"
+      }
+    }
+
+    # Example 2: Application server without external IP
+    app-server = {
+      name           = "my-app-server"
+      zone           = "us-central1-b"
+      machine_type   = "e2-standard-2"           # 2 vCPU, 8GB RAM
+      boot_disk_size = 30
+      boot_disk_type = "pd-ssd"                  # SSD for better performance
+      
+      # Network configuration - private subnet
+      network_name   = "shivani-dev-vpc-network"
+      subnet_name    = "shivani-dev-app-subnet"
+      external_ip    = false                     # No external IP - internal only
+      internal_ip    = "10.0.2.10"              # Optional: static internal IP
+      
+      # Security tags
+      network_tags   = ["app-server", "internal-only"]
+      
+      # Service account (optional)
+      # service_account = "my-app-sa@PROJECT_ID.iam.gserviceaccount.com"
+      
+      # Additional storage
+      additional_disks = [
+        {
+          name = "app-data"
+          size = 50                              # 50GB additional disk
+          type = "pd-standard"
+        }
+      ]
+      
+      # Startup script for application setup
+      startup_script = <<-EOF
+        #!/bin/bash
+        apt-get update
+        apt-get install -y docker.io
+        systemctl enable docker
+        systemctl start docker
+        usermod -aG docker $USER
+      EOF
+      
+      labels = {
+        environment = "development"
+        application = "backend-api"
+        tier       = "application"
+      }
+    }
+
+    # Example 3: Database server with high-performance setup
+    # database-server = {
+    #   name           = "prod-database"
+    #   zone           = "us-central1-c"
+    #   machine_type   = "n2-standard-4"         # 4 vCPU, 16GB RAM
+    #   boot_disk_size = 50
+    #   boot_disk_type = "pd-ssd"
+    #   
+    #   # Use custom OS image
+    #   image_family   = "ubuntu-2204-lts"
+    #   image_project  = "ubuntu-os-cloud"
+    #   
+    #   network_name   = "shivani-dev-vpc-network"
+    #   subnet_name    = "shivani-dev-app-subnet"
+    #   external_ip    = false
+    #   internal_ip    = "10.0.2.20"
+    #   
+    #   network_tags   = ["database-server", "no-external"]
+    #   
+    #   additional_disks = [
+    #     {
+    #       name = "database-data"
+    #       size = 200
+    #       type = "pd-ssd"
+    #     },
+    #     {
+    #       name = "database-logs"
+    #       size = 50
+    #       type = "pd-standard"
+    #     }
+    #   ]
+    #   
+    #   metadata = {
+    #     environment = "production"
+    #     backup     = "daily"
+    #   }
+    #   
+    #   labels = {
+    #     environment = "production"
+    #     application = "database"
+    #     tier       = "data"
+    #   }
+    # }
+  }
+
+  # Additional firewall rules for compute instances
+  firewall_rules = {
+    # Allow HTTP/HTTPS traffic to web servers
+    "allow-web-traffic" = {
+      description   = "Allow HTTP and HTTPS traffic to web servers"
+      source_ranges = ["0.0.0.0/0"]
+      target_tags   = ["web-server"]
+      allow = [
+        {
+          protocol = "tcp"
+          ports    = ["80", "443"]
+        }
+      ]
+    }
+
+    # Allow internal communication between app and database
+    # "allow-app-to-db" = {
+    #   description   = "Allow app servers to access database"
+    #   source_ranges = ["10.0.2.0/24"]  # App subnet CIDR
+    #   target_tags   = ["database-server"]
+    #   allow = [
+    #     {
+    #       protocol = "tcp"
+    #       ports    = ["5432", "3306"]  # PostgreSQL, MySQL
+    #     }
+    #   ]
+    # }
+  }
+
+  # Optional: Create a load balancer for web servers
+  create_load_balancer = false
+  load_balancer_config = {
+    name                = "web-load-balancer"
+    health_check_path   = "/"
+    health_check_port   = 80
+    backend_port        = 80
+    session_affinity    = "NONE"
+    enable_cdn          = false
+  }
+}

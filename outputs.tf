@@ -127,3 +127,37 @@ output "next_steps" {
     ]
   }
 }
+
+# =========================================
+# COMPUTE OUTPUTS
+# =========================================
+
+output "compute" {
+  description = "Compute resources information"
+  value = var.create_compute ? {
+    vm_instances     = module.compute[0].vm_instances
+    vm_names         = module.compute[0].vm_names
+    vm_internal_ips  = module.compute[0].vm_internal_ips
+    vm_external_ips  = module.compute[0].vm_external_ips
+    ssh_commands     = module.compute[0].ssh_commands
+    additional_disks = module.compute[0].additional_disks
+    firewall_rules   = module.compute[0].firewall_rules
+    load_balancer    = module.compute[0].load_balancer
+    summary          = module.compute[0].summary
+  } : null
+}
+
+output "vm_connection_info" {
+  description = "VM connection information for easy access"
+  value = var.create_compute ? {
+    for key, vm in module.compute[0].vm_instances : key => {
+      name        = vm.name
+      zone        = vm.zone
+      internal_ip = vm.internal_ip
+      external_ip = vm.external_ip
+      ssh_internal = "gcloud compute ssh ${vm.name} --zone=${vm.zone} --internal-ip"
+      ssh_external = vm.external_ip != null ? "gcloud compute ssh ${vm.name} --zone=${vm.zone}" : "No external IP available"
+      console_link = "https://console.cloud.google.com/compute/instancesDetail/zones/${vm.zone}/instances/${vm.name}?project=${var.project_id}"
+    }
+  } : {}
+}

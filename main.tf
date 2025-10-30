@@ -241,6 +241,32 @@ module "iam" {
 }
 
 # =========================================
+# COMPUTE MODULE
+# =========================================
+module "compute" {
+  count  = var.create_compute ? 1 : 0
+  source = "./modules/compute"
+
+  project_id = var.project_id
+
+  # Default labels for all compute resources
+  default_labels = local.common_labels
+
+  # VM instances configuration
+  vm_instances = var.compute_config.vm_instances
+
+  # Additional firewall rules
+  firewall_rules = var.compute_config.firewall_rules
+
+  # Load balancer configuration
+  create_load_balancer = var.compute_config.create_load_balancer
+  load_balancer_config = var.compute_config.load_balancer_config
+
+  # Dependencies - ensure network is created first
+  depends_on = [module.network]
+}
+
+# =========================================
 # DATA SOURCES FOR REFERENCE
 # =========================================
 
