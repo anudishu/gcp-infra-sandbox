@@ -5,7 +5,7 @@
 ## 🌐 Live Infrastructure
 
 **✅ Successfully Deployed**
-- **Web Server**: http://104.197.2.119 (shivani-web-server)
+- **Web Server**: http://34.27.182.72 (shivani-web-server)
 - **Project**: probable-cove-474504-p0
 - **Environment**: Development
 
@@ -145,7 +145,7 @@ terraform-gcp-infrastructure/
 
 ## 🚀 Next Steps
 
-1. **Test**: Visit http://104.197.2.119
+1. **Test**: Visit http://34.27.182.72
 2. **SSH**: Connect to your server
 3. **Expand**: Add load balancer, database, monitoring
 4. **Production**: Configure remote state backend
